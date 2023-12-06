@@ -1,6 +1,8 @@
+from collections import deque
+
 
 def read_input_file():
-    with open("test-input2.txt", "r") as open_file:
+    with open("input2.txt", "r") as open_file:
         lines = open_file.readlines()
 
     return lines
@@ -14,20 +16,42 @@ def read_input_file():
 # Card 6: 31 18 13 56 72 | 74 77 10 23 35 67 36 11
 
 def parse_lines(lines):
-    total = 0
+    cards = {}
     for line in lines:
         card_numbers = line.strip().split(':')
         numbers = card_numbers[1].split('|')
         winning_numbers = numbers[0].split()
         my_numbers = numbers[1].split()
-        winning = 0
-        for number in my_numbers:
-            if number in winning_numbers:
-                winning += 1
+        cards[int(card_numbers[0].replace('Card', ' ').strip())] = (1, winning_numbers, my_numbers)
 
-    return total
+    return cards
+
+
+def process_cards(cards):
+    # Initialize the queue with the original card structures
+    queue = deque([card_id for card_id in cards])
+
+    # Dictionary to keep track of the total number of each card
+    total_cards = {card_id: 0 for card_id in cards}
+
+    while queue:
+        card_id = queue.popleft()
+        total_cards[card_id] += 1
+
+        winning_numbers_list, my_numbers = cards[card_id][1], cards[card_id][2]
+        winning_count = sum(1 for number in my_numbers if number in winning_numbers_list)
+
+        # Add copies of subsequent cards to the queue
+        for adder in range(card_id + 1, card_id + 1 + winning_count):
+            if adder in cards:
+                queue.append(adder)
+
+    return total_cards
+
 
 
 lines = read_input_file()
-total = parse_lines(lines)
-print(total)
+cards = parse_lines(lines)
+cards = process_cards(cards)
+print(cards)
+print(sum(cards.values()))
