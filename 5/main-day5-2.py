@@ -1,6 +1,4 @@
 import time
-import concurrent.futures
-import threading
 
 
 def read_input_file():
@@ -70,24 +68,12 @@ def map_seed_to_location(seed, mappings):
     return seed
 
 
-def process_seed(seed):
-    # Access the global mappings variable
-    global mappings
-    return map_seed_to_location(seed, mappings)
+def estimate_remaining_time(start_time, current_count, total_count):
+    elapsed_time = time.time() - start_time
+    time_per_item = elapsed_time / current_count
+    remaining_time = time_per_item * (total_count - current_count)
+    return remaining_time / 60  # Convert seconds to minutes
 
-
-def update_progress_and_check_lowest_location(location, lock):
-    global lowest_location, seed_count, start_time, number_of_seeds
-    with lock:
-        if location < lowest_location:
-            lowest_location = location
-        seed_count += 1
-        if (seed_count % 100000) == 0:
-            elapsed_time = time.time() - start_time
-            percent_complete = seed_count / number_of_seeds
-            remaining_time = (elapsed_time / percent_complete) - elapsed_time
-            print(f"Processed {percent_complete * 100:.2f}% of seeds")
-            print(f"Estimated time remaining: {remaining_time / 60:.2f} minutes")
 
 
 lines = read_input_file()
@@ -116,23 +102,19 @@ start_time = time.time()
 lowest_location = 2**63
 number_of_seeds = len(seeds)
 seed_count = 0
-lock = threading.Lock()
+
+for seed in seeds:
+    seed_count += 1
+    location = map_seed_to_location(seed, mappings)
+    if location < lowest_location:
+        lowest_location = location
+
+    # Progress update
+    if seed_count % 100000 == 0 or seed_count == number_of_seeds:
+        progress_percentage = (seed_count / number_of_seeds) * 100
+        remaining_time = estimate_remaining_time(start_time, seed_count, number_of_seeds)
+        print(f"Processed {seed_count} seeds ({progress_percentage:.2f}%) - Estimated time remaining: {remaining_time:.2f} minutes")
 
 
-# Using ThreadPoolExecutor to process seeds in parallel
-with concurrent.futures.ThreadPoolExecutor() as executor:
-    # Submit all seeds for processing
-    print("Filling thread pool")
-    future_to_seed = {executor.submit(process_seed, seed): seed for seed in seeds}
-    print("Starting processing seeds")
-
-    # As each seed is processed, update progress and check lowest location
-    for future in concurrent.futures.as_completed(future_to_seed):
-        seed = future_to_seed[future]
-        try:
-            location = future.result()
-            update_progress_and_check_lowest_location(location, lock)
-        except Exception as exc:
-            print(f"Seed {seed} generated an exception: {exc}")
 
 print(f"Lowest location is {lowest_location}")
