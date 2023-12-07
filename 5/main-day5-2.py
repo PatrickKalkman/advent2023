@@ -32,19 +32,6 @@ def translate_number(num, translation_map):
     return num
 
 
-def get_seeds(lines):
-    for line in lines:
-        if line.startswith("seeds: "):
-            parts = line.replace("seeds: ", "").split()
-            seeds = []
-            for i in range(0, len(parts), 2):
-                start = int(parts[i])
-                range_length = int(parts[i + 1])
-                seeds.extend(range(start, start + range_length))
-            return seeds
-    return []
-
-
 def create_map(lines, start_token):
     mapping_data = []
     capture = False
@@ -75,11 +62,7 @@ def estimate_remaining_time(start_time, current_count, total_count):
     return remaining_time / 60  # Convert seconds to minutes
 
 
-
 lines = read_input_file()
-print("Generating seeds")
-seeds = get_seeds(lines)
-print(f"Number of seeds: {len(seeds)}")
 seed_to_soil_map = create_map(lines, 'seed-to-soil map:')
 soil_to_fertilizer_map = create_map(lines, 'soil-to-fertilizer map:')
 fertilizer_to_water_map = create_map(lines, 'fertilizer-to-water map:')
@@ -100,21 +83,48 @@ mappings = [
 
 start_time = time.time()
 lowest_location = 2**63
-number_of_seeds = len(seeds)
+
 seed_count = 0
 
-for seed in seeds:
+
+def get_seeds(lines):
+    for line in lines:
+        if line.startswith("seeds: "):
+            parts = line.replace("seeds: ", "").split()
+            for i in range(0, len(parts), 2):
+                start = int(parts[i])
+                range_length = int(parts[i + 1])
+                yield from range(start, start + range_length)
+
+
+def count_total_seeds(lines):
+    total_seeds = 0
+    for line in lines:
+        if line.startswith("seeds: "):
+            parts = line.replace("seeds: ", "").split()
+            for i in range(0, len(parts), 2):
+                range_length = int(parts[i + 1])
+                total_seeds += range_length
+    return total_seeds
+
+
+print("Generating seeds")
+
+total_number_of_seeds = count_total_seeds(lines)
+seed_generator = get_seeds(lines)
+
+
+for seed in seed_generator:
     seed_count += 1
     location = map_seed_to_location(seed, mappings)
     if location < lowest_location:
         lowest_location = location
 
-    # Progress update
-    if seed_count % 100000 == 0 or seed_count == number_of_seeds:
-        progress_percentage = (seed_count / number_of_seeds) * 100
-        remaining_time = estimate_remaining_time(start_time, seed_count, number_of_seeds)
+    # Progress update for every 500000 seeds processed
+    if seed_count % 500000 == 0 or seed_count == total_number_of_seeds:
+        progress_percentage = (seed_count / total_number_of_seeds) * 100
+        remaining_time = estimate_remaining_time(start_time, seed_count, total_number_of_seeds)
         print(f"Processed {seed_count} seeds ({progress_percentage:.2f}%) - Estimated time remaining: {remaining_time:.2f} minutes")
-
 
 
 print(f"Lowest location is {lowest_location}")
