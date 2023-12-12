@@ -3,7 +3,7 @@ from collections import deque
 
 
 def read_input_file():
-    with open("./input1.txt", "r") as open_file:
+    with open("./test-input1.txt", "r") as open_file:
         lines = open_file.readlines()
     return lines
 
@@ -90,6 +90,7 @@ def calculate_paths_sum(grid, galaxies):
 
         for j in range(i + 1, total_galaxies):
             path_length = bfs(grid, galaxies[galaxy_numbers[i]], galaxies[galaxy_numbers[j]])
+            print(f"Distance between {galaxy_numbers[i]} and {galaxy_numbers[j]} is {path_length}")
             path_lengths.append(path_length)
             completed_pairs += 1
 
@@ -102,14 +103,14 @@ def calculate_paths_sum(grid, galaxies):
         # Estimate time remaining for all pairs
         estimated_time_remaining = avg_time_per_pair * (total_pairs - completed_pairs)
 
-        print(f"Completed pairs with galaxy {i + 1}/{total_galaxies}. Estimated time remaining: {estimated_time_remaining:.2f} seconds")
+        # print(f"Completed pairs with galaxy {i + 1}/{total_galaxies}. Estimated time remaining: {estimated_time_remaining:.2f} seconds")
 
     return sum(path_lengths)
 
 
 def print_grid(grid):
     for row in grid:
-        print(' '.join(row))
+        print(''.join(row))
 
 
 # Main execution
@@ -117,6 +118,7 @@ lines = read_input_file()
 grid = parse_grid(lines)
 doubled_grid = double_empty_rows_and_columns(grid)
 numbered_galaxy = number_galaxies(doubled_grid)
+print_grid(numbered_galaxy)
 galaxies = find_galaxies(numbered_galaxy)
 total_path_length = calculate_paths_sum(doubled_grid, galaxies)
 
