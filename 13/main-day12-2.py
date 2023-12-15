@@ -1,5 +1,5 @@
 def read_input_file():
-    with open("./input1.txt", "r") as open_file:
+    with open("./input2.txt", "r") as open_file:
         lines = open_file.readlines()
     return lines
 
@@ -47,6 +47,25 @@ def find_horizontal_reflection(block):
     return None, None
 
 
+def generate_grids(original_grid):
+    rows = len(original_grid)
+    cols = len(original_grid[0])
+    all_grids = []
+
+    for i in range(rows):
+        for j in range(cols):
+            # Create a deep copy of the original grid to modify
+            new_grid = [row[:] for row in original_grid]
+
+            # Toggle the cell
+            new_grid[i][j] = toggle_cell(new_grid[i][j])
+
+            # Add the modified grid to the list
+            all_grids.append(new_grid)
+
+    return all_grids
+
+
 def find_vertical_reflection(block):
     cols = len(block[0])
 
@@ -62,6 +81,7 @@ def find_vertical_reflection(block):
         col2 = get_column(block, i + 1)
 
         if is_mirror_pair(col1, col2):
+            #print("found vertical reflection at", i, i + 1)
             left = i - 1
             right = i + 2
 
@@ -69,11 +89,13 @@ def find_vertical_reflection(block):
                 left -= 1
                 right += 1
 
+            #print("left", left, "right", right, "cols", cols)
+
             if left == 0 and right == cols:
                 return i, i + 1
             if left == -1:
                 return i, i + 1
-            elif right == cols and left > 0:
+            if right == cols and left > 0:
                 return i, i + 1
 
     return None, None
@@ -92,20 +114,54 @@ def calculate_pattern_score(block):
     return score
 
 
+def toggle_cell(cell):
+    return '#' if cell == '.' else '.'
+
+
+def find_changed_reflection(block):
+    original_horizontal_reflection = find_horizontal_reflection(block)
+    original_vertical_reflection = find_vertical_reflection(block)
+    print("original horizontal reflection", original_horizontal_reflection)
+    print("original vertical reflection", original_vertical_reflection)
+    rows = len(block)
+    cols = len(block[0])
+
+    for i in range(rows):
+        for j in range(cols):
+
+            block[i][j] = toggle_cell(block[i][j])
+
+            # Check for new reflection
+            new_horizontal_reflection = find_horizontal_reflection(block)
+            new_vertical_reflection = find_vertical_reflection(block)
+
+            if new_horizontal_reflection == (None, None) and new_vertical_reflection == (None, None):
+                block[i][j] = toggle_cell(block[i][j])
+                continue
+
+            if new_horizontal_reflection != original_horizontal_reflection or new_vertical_reflection != original_vertical_reflection:
+                print(f"Changing cell ({i+1}, {j+1}) resulted in a different reflection at ({new_horizontal_reflection}, {new_vertical_reflection})")
+                return (new_horizontal_reflection, new_vertical_reflection)
+
+            # Toggle the cell back
+            block[i][j] = toggle_cell(block[i][j])
+
+    print("No cell change resulted in a different reflection")
+
+
 lines = read_input_file()
 blocks = parse_blocks(lines)
+
 sum = 0
+block_nr = 0
 for block in blocks:
+    block_nr += 1
+    print("Block", block_nr)
     row1, row2 = find_horizontal_reflection(block)
+    col1, col2 = find_vertical_reflection(block)
+
+    find_changed_reflection(block)
     score = calculate_pattern_score(block)
     sum += score
-    if (row1 is None) or (row2 is None):
-        col1, col2 = find_vertical_reflection(block)
-        if (col1 is None) or (col2 is None):
-            print("no reflection found")
-        else:
-            print("found vertical reflection at", col1, col2)
-    else:
-        print("found horizontal reflection at", row1, row2)
 
 print(sum)
