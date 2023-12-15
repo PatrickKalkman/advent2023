@@ -1,5 +1,5 @@
 def read_input_file():
-    with open("./test-input1.txt", "r") as open_file:
+    with open("./input2.txt", "r") as open_file:
         lines = open_file.readlines()
     return lines
 
@@ -87,15 +87,33 @@ def calculate_load(grid):
     return total_load
 
 
+def hash_grid(grid):
+    return "\n".join(["".join(row) for row in grid])
+
+
+def run_simulation(grid, iterations):
+    seen_states = {}
+    for it in range(iterations):
+        state_hash = hash_grid(grid)
+
+        # Check if this state has been seen before
+        if state_hash in seen_states:
+            cycle_length = it - seen_states[state_hash]
+            remaining_iterations = (iterations - it) % cycle_length
+            return run_simulation(grid, remaining_iterations)
+
+        seen_states[state_hash] = it
+
+        process_north(grid)
+        drop_west(grid)
+        drop_south(grid)
+        drop_east(grid)
+
+    return grid
+
+
 lines = read_input_file()
 grid = parse_blocks(lines)
-for it in range(1000000000):
-    if it % 1000000 == 0:
-        print("Iteration:", it)
-    process_north(grid)
-    drop_west(grid)
-    drop_south(grid)
-    drop_east(grid)
-
+grid = run_simulation(grid, 1000000000)
 total_load = calculate_load(grid)
 print("Total load:", total_load)
