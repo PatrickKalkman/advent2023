@@ -1,5 +1,6 @@
 import itertools
 
+
 def read_input_file():
     with open("./input1.txt", "r") as open_file:
         lines = open_file.readlines()

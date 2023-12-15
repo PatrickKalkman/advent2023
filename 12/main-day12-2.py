@@ -2,6 +2,7 @@ import itertools
 import concurrent.futures
 import os
 
+
 def read_input_file():
     with open("./test-input2.txt", "r") as open_file:
         lines = open_file.readlines()
